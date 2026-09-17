@@ -82,13 +82,13 @@ const Dashboard = () => {
   const [tournaments, setTournaments] = useState([])
   const navigate = useNavigate()
 
-  const fetchTournaments = () => fetch('[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments').then(res => res.json()).then(setTournaments)
+  const fetchTournaments = () => fetch('https://sptp-backend.onrender.com/tournaments').then(res => res.json()).then(setTournaments)
   useEffect(() => { fetchTournaments() }, [])
 
   const deleteTournament = async (e, id) => {
     e.stopPropagation() 
     if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) {
-      const res = await fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${id}`, { method: 'DELETE' })
+      const res = await fetch(`https://sptp-backend.onrender.com/tournaments/${id}`, { method: 'DELETE' })
       if (res.ok) fetchTournaments()
     }
   }
@@ -139,7 +139,7 @@ const CreateTournament = () => {
     const validTeams = teamNames.filter(t => t.trim() !== '')
     if (validTeams.length < 2) return alert('ต้องกรอกชื่อทีมอย่างน้อย 2 ทีมครับ!')
 
-    const res = await fetch('[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments', {
+    const res = await fetch('https://sptp-backend.onrender.com/tournaments', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, type, league_format: leagueFormat, team_names: validTeams })
     })
@@ -147,7 +147,7 @@ const CreateTournament = () => {
     if (res.ok) {
       const { tournamentId } = await res.json()
       const endpoint = type === 'league' ? 'generate-matches' : 'generate-knockout'
-      await fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${tournamentId}/${endpoint}`, { method: 'POST' })
+      await fetch(`https://sptp-backend.onrender.com/tournaments/${tournamentId}/${endpoint}`, { method: 'POST' })
       navigate(`/tournament/${tournamentId}`)
     }
   }
@@ -216,24 +216,24 @@ const TournamentDetail = () => {
   const matchesRef = useRef(null)
 
   const fetchData = async () => {
-    fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${id}`).then(res => res.json()).then(setTourney)
-    fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${id}/matches`).then(res => res.json()).then(setMatches)
-    fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${id}/standings`).then(res => res.json()).then(setStandings)
+    fetch(`https://sptp-backend.onrender.com/tournaments/${id}`).then(res => res.json()).then(setTourney)
+    fetch(`https://sptp-backend.onrender.com/tournaments/${id}/matches`).then(res => res.json()).then(setMatches)
+    fetch(`https://sptp-backend.onrender.com/tournaments/${id}/standings`).then(res => res.json()).then(setStandings)
   }
   useEffect(() => { fetchData() }, [id])
 
   const updateScore = async (matchId, h, a) => {
-    await fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/matches/${matchId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ home_score: h, away_score: a }) })
+    await fetch(`https://sptp-backend.onrender.com/matches/${matchId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ home_score: h, away_score: a }) })
     fetchData()
   }
 
   const resetScore = async (matchId) => {
-    await fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/matches/${matchId}/reset`, { method: 'PUT' })
+    await fetch(`https://sptp-backend.onrender.com/matches/${matchId}/reset`, { method: 'PUT' })
     fetchData()
   }
 
   const generateNextRound = async () => {
-    const res = await fetch(`[https://sptp-backend.onrender.com](https://sptp-backend.onrender.com/tournaments/${id}/generate-knockout`, { method: 'POST' })
+    const res = await fetch(`https://sptp-backend.onrender.com/tournaments/${id}/generate-knockout`, { method: 'POST' })
     const data = await res.json()
     if (res.ok) fetchData()
     else alert(data.error)
@@ -257,7 +257,7 @@ const TournamentDetail = () => {
   const currentMatches = matches.filter(m => m.match_round === currentRoundName)
 
   const bgStyle = {
-    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('/SPTP.jpg')`, // เปลี่ยนกลับเป็น bg.jpg หากคุณเปลี่ยนชื่อไฟล์ หรือใช้ชื่อเดิม
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('/SPTP.jpg')`, 
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     color: 'white',
@@ -289,7 +289,6 @@ const TournamentDetail = () => {
             <table style={{ width: '100%', textAlign: 'center', fontSize: '13px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ color: '#fdba74', borderBottom: '2px solid rgba(234, 88, 12, 0.5)' }}>
-                  {/* ✅ แยกคอลัมน์ # (อันดับ) ออกมาจากชื่อทีม */}
                   <th style={{ paddingBottom:'8px', width: '25px' }}>ลำดับ</th>
                   <th style={{textAlign:'left', paddingBottom:'8px', paddingLeft: '5px'}}>ทีม</th>
                   <th>แข่ง</th><th>ชนะ</th><th>เสมอ</th><th>แพ้</th><th>ได้</th><th>เสีย</th><th>GD</th><th>Pts</th>
@@ -298,9 +297,7 @@ const TournamentDetail = () => {
               <tbody>
                 {standings.map((t, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', height: '45px' }}>
-                    {/* ✅ โชว์ตัวเลขอันดับแยกต่างหาก และให้สีทองๆ จะได้เด่นๆ */}
                     <td style={{ color: '#fdba74', fontWeight: 'bold' }}>{i+1}</td>
-                    {/* ✅ โชว์ชื่อทีมเพียวๆ ไม่ติดอันดับแล้ว */}
                     <td style={{textAlign:'left', fontWeight: 'bold', color: '#fff', paddingLeft: '5px'}}>{t.name.length > 8 ? t.name.substring(0,8) + '..' : t.name}</td>
                     <td>{t.played}</td><td>{t.won}</td><td>{t.drawn}</td><td>{t.lost}</td>
                     <td style={{color:'#4ade80'}}>{t.gf}</td>
