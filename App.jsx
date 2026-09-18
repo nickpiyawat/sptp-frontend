@@ -212,6 +212,9 @@ const TournamentDetail = () => {
   const [standings, setStandings] = useState([])
   const [roundIndex, setRoundIndex] = useState(0)
   
+  // ✅ เพิ่ม State สำหรับเปิด/ปิด รูปภาพ Popup บนมือถือ
+  const [previewImage, setPreviewImage] = useState(null)
+  
   const standingsRef = useRef(null)
   const matchesRef = useRef(null)
 
@@ -239,29 +242,26 @@ const TournamentDetail = () => {
     else alert(data.error)
   }
 
-const downloadImage = (ref, fileName) => {
+  // ✅ ระบบจัดการดาวน์โหลดรูปที่รองรับมือถือ 100%
+  const downloadImage = (ref, fileName) => {
     if (ref.current) {
       html2canvas(ref.current, { backgroundColor: '#111', useCORS: true }).then(canvas => {
-        canvas.toBlob((blob) => {
-          const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
-          
-          // ตรวจสอบว่าเป็นมือถือ และรองรับระบบแชร์ไฟล์หรือไม่
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              files: [file],
-              title: fileName
-            }).catch(err => console.log('ยกเลิกการแชร์:', err));
-          } else {
-            // ถ้าเล่นบนคอมพิวเตอร์ ให้ดาวน์โหลดไฟล์ตามปกติ
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `${fileName}.png`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-          }
-        }, 'image/png');
-      });
+        const imgData = canvas.toDataURL('image/png')
+        
+        // เช็คว่าผู้ใช้เปิดจากมือถือหรือแท็บเล็ตหรือไม่
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        
+        if (isMobile) {
+          // ถ้าเป็นมือถือ: เด้งรูปขึ้นมาให้แตะค้างเพื่อเซฟ
+          setPreviewImage(imgData)
+        } else {
+          // ถ้าเป็นคอม: โหลดไฟล์ลงเครื่องทันที
+          const link = document.createElement('a')
+          link.download = `${fileName}.png`
+          link.href = imgData
+          link.click()
+        }
+      })
     }
   }
 
@@ -352,6 +352,21 @@ const downloadImage = (ref, fileName) => {
           )}
         </div>
       </div>
+
+      {/* ✅ หน้าต่าง Popup สำหรับเซฟรูปบนมือถือ */}
+      {previewImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box' }}>
+          <p style={{ color: '#4ade80', fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', textAlign: 'center' }}>
+            📸 แตะค้างที่รูปภาพเพื่อบันทึกลงเครื่อง
+          </p>
+          <div style={{ overflow: 'auto', maxWidth: '100%', maxHeight: '70vh', borderRadius: '10px', boxShadow: '0 0 15px rgba(234, 88, 12, 0.8)' }}>
+            <img src={previewImage} alt="Table Preview" style={{ display: 'block', width: '100%', height: 'auto' }} />
+          </div>
+          <button onClick={() => setPreviewImage(null)} style={{ marginTop: '20px', padding: '12px 25px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      )}
     </div>
   )
 }
