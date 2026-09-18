@@ -239,14 +239,29 @@ const TournamentDetail = () => {
     else alert(data.error)
   }
 
-  const downloadImage = (ref, fileName) => {
+const downloadImage = (ref, fileName) => {
     if (ref.current) {
       html2canvas(ref.current, { backgroundColor: '#111', useCORS: true }).then(canvas => {
-        const link = document.createElement('a')
-        link.download = `${fileName}.png`
-        link.href = canvas.toDataURL('image/png')
-        link.click()
-      })
+        canvas.toBlob((blob) => {
+          const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+          
+          // ตรวจสอบว่าเป็นมือถือ และรองรับระบบแชร์ไฟล์หรือไม่
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: fileName
+            }).catch(err => console.log('ยกเลิกการแชร์:', err));
+          } else {
+            // ถ้าเล่นบนคอมพิวเตอร์ ให้ดาวน์โหลดไฟล์ตามปกติ
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `${fileName}.png`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/png');
+      });
     }
   }
 
