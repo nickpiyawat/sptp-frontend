@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Home, Trophy, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, PlusCircle, Trash2, Download, Edit, X, RotateCcw } from 'lucide-react'
-import html2canvas from 'html2canvas'
+import { Home, Trophy, ChevronRight, ChevronLeft, ArrowLeft, ArrowRight, PlusCircle, Trash2, Maximize, Edit, X, RotateCcw } from 'lucide-react'
 
 // ==========================================
 // Component ย่อย: สำหรับจัดการ 1 แมตช์
 // ==========================================
-const MatchRow = ({ match, onSave, onReset }) => {
+const MatchRow = ({ match, onSave, onReset, isPreview }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [homeScore, setHomeScore] = useState(match.home_score || 0)
   const [awayScore, setAwayScore] = useState(match.away_score || 0)
@@ -37,7 +36,7 @@ const MatchRow = ({ match, onSave, onReset }) => {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.2)', padding: '15px 0' }}>
       <div style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: '#fff', textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>{match.home_team_name}</div>
       <div style={{ padding: '0 10px', display: 'flex', gap: '5px', alignItems: 'center', justifyContent: 'center', width: '90px' }}>
-        {isEditing ? (
+        {isEditing && !isPreview ? (
           <>
             <input type="number" min="0" value={homeScore} onChange={e => handleScoreChange(setHomeScore, e.target.value)} style={{ width: '35px', textAlign: 'center', border: '1px solid #ea580c', borderRadius: '5px', fontSize:'16px', background: 'rgba(255,255,255,0.9)', color: '#000' }} />
             <span style={{ color: '#ea580c', fontWeight: 'bold' }}>-</span>
@@ -56,21 +55,24 @@ const MatchRow = ({ match, onSave, onReset }) => {
       </div>
       <div style={{ flex: 1, textAlign: 'left', fontWeight: 'bold', color: '#fff', textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>{match.away_team_name}</div>
       
-      <div data-html2canvas-ignore="true" style={{ minWidth: '70px', display: 'flex', gap: '5px', justifyContent: 'flex-start', paddingLeft: '10px' }}>
-        {isEditing ? (
-          <>
-            <button onClick={handleSave} style={{ padding: '5px 8px', background: '#10b981', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>เซฟ</button>
-            <button onClick={handleCancel} style={{ padding: '5px 6px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><X size={16} /></button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setIsEditing(true)} style={{ padding: '5px 8px', background: 'rgba(255,255,255,0.2)', color: '#fdba74', border: '1px solid #fdba74', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Edit size={16} /></button>
-            {match.is_played && (
-              <button onClick={() => { if(window.confirm('ล้างคะแนนคู่นี้กลับไปเป็น VS ไหม?')) onReset(match.id) }} style={{ padding: '5px 8px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="ยกเลิกผลการแข่ง"><RotateCcw size={16} /></button>
-            )}
-          </>
-        )}
-      </div>
+      {/* ซ่อนปุ่มแก้ไขทั้งหมดเวลาอยู่ในโหมดแคปจอ (isPreview) */}
+      {!isPreview && (
+        <div style={{ minWidth: '70px', display: 'flex', gap: '5px', justifyContent: 'flex-start', paddingLeft: '10px' }}>
+          {isEditing ? (
+            <>
+              <button onClick={handleSave} style={{ padding: '5px 8px', background: '#10b981', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>เซฟ</button>
+              <button onClick={handleCancel} style={{ padding: '5px 6px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><X size={16} /></button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setIsEditing(true)} style={{ padding: '5px 8px', background: 'rgba(255,255,255,0.2)', color: '#fdba74', border: '1px solid #fdba74', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Edit size={16} /></button>
+              {match.is_played && (
+                <button onClick={() => { if(window.confirm('ล้างคะแนนคู่นี้กลับไปเป็น VS ไหม?')) onReset(match.id) }} style={{ padding: '5px 8px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="ยกเลิกผลการแข่ง"><RotateCcw size={16} /></button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -212,8 +214,8 @@ const TournamentDetail = () => {
   const [standings, setStandings] = useState([])
   const [roundIndex, setRoundIndex] = useState(0)
   
-  const standingsRef = useRef(null)
-  const matchesRef = useRef(null)
+  // ✅ State สำหรับเก็บว่ากำลังขยายดูส่วนไหนเต็มจออยู่ ('standings' หรือ 'matches' หรือ null)
+  const [fullscreenView, setFullscreenView] = useState(null) 
 
   const fetchData = async () => {
     fetch(`https://sptp-backend.onrender.com/tournaments/${id}`).then(res => res.json()).then(setTourney)
@@ -239,17 +241,6 @@ const TournamentDetail = () => {
     else alert(data.error)
   }
 
-  const downloadImage = (ref, fileName) => {
-    if (ref.current) {
-      html2canvas(ref.current, { backgroundColor: '#111', useCORS: true }).then(canvas => {
-        const link = document.createElement('a')
-        link.download = `${fileName}.png`
-        link.href = canvas.toDataURL('image/png')
-        link.click()
-      })
-    }
-  }
-
   if (!tourney) return <div style={{ padding: '20px', textAlign: 'center' }}>กำลังโหลด...</div>
 
   const allRounds = [...new Set(matches.map(m => m.match_round))]
@@ -267,6 +258,59 @@ const TournamentDetail = () => {
     border: '2px solid #ea580c'
   }
 
+  // ✅ แยกส่วนตารางคะแนนออกมาเป็นฟังก์ชัน เพื่อให้เรียกใช้ซ้ำตอนขยายเต็มจอได้ง่าย
+  const renderStandings = (isPreview = false) => (
+    <div style={{ ...bgStyle, overflowX: 'auto', minHeight: isPreview ? '100%' : 'auto' }}>
+      <h3 style={{ margin: '0 0 15px 0', textAlign: 'center', color: '#fdba74', textShadow: '1px 1px 2px #000' }}>🏆 ตารางคะแนน {tourney.name}</h3>
+      <table style={{ width: '100%', textAlign: 'center', fontSize: '13px', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ color: '#fdba74', borderBottom: '2px solid rgba(234, 88, 12, 0.5)' }}>
+            <th style={{ paddingBottom:'8px', width: '25px' }}>ลำดับ</th>
+            <th style={{textAlign:'left', paddingBottom:'8px', paddingLeft: '5px'}}>ทีม</th>
+            <th>แข่ง</th><th>ชนะ</th><th>เสมอ</th><th>แพ้</th><th>ได้</th><th>เสีย</th><th>GD</th><th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {standings.map((t, i) => (
+            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', height: '45px' }}>
+              <td style={{ color: '#fdba74', fontWeight: 'bold' }}>{i+1}</td>
+              <td style={{textAlign:'left', fontWeight: 'bold', color: '#fff', paddingLeft: '5px'}}>{t.name.length > 8 ? t.name.substring(0,8) + '..' : t.name}</td>
+              <td>{t.played}</td><td>{t.won}</td><td>{t.drawn}</td><td>{t.lost}</td>
+              <td style={{color:'#4ade80'}}>{t.gf}</td>
+              <td style={{color:'#f87171'}}>{t.ga}</td>
+              <td>{t.gd}</td>
+              <td style={{color:'#facc15', fontWeight:'bold', fontSize:'16px'}}>{t.points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+
+  // ✅ แยกส่วนตารางแข่งออกมาเป็นฟังก์ชัน 
+  const renderMatches = (isPreview = false) => (
+    <div style={{ ...bgStyle, minHeight: isPreview ? '100%' : 'auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: 'rgba(0,0,0,0.6)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(234, 88, 12, 0.3)' }}>
+        {/* ซ่อนปุ่มเปลี่ยนรอบ เวลาขยายเต็มจอ */}
+        {!isPreview && <button onClick={() => setRoundIndex(prev => Math.max(0, prev - 1))} disabled={roundIndex === 0} style={{ border: 'none', background: 'none', opacity: roundIndex === 0 ? 0.3 : 1, cursor: 'pointer', color: '#fff' }}><ArrowLeft size={20} /></button>}
+        
+        <strong style={{ fontSize: '18px', color: '#fdba74', margin: isPreview ? '0 auto' : '0' }}>{currentRoundName || 'ยังไม่มีตารางแข่ง'}</strong>
+        
+        {!isPreview && <button onClick={() => setRoundIndex(prev => Math.min(allRounds.length - 1, prev + 1))} disabled={roundIndex === allRounds.length - 1} style={{ border: 'none', background: 'none', opacity: roundIndex === allRounds.length - 1 ? 0.3 : 1, cursor: 'pointer', color: '#fff' }}><ArrowRight size={20} /></button>}
+      </div>
+
+      {currentMatches.map(m => (
+        <MatchRow key={m.id} match={m} onSave={updateScore} onReset={resetScore} isPreview={isPreview} />
+      ))}
+
+      {!isPreview && tourney.type === 'knockout' && roundIndex === allRounds.length - 1 && (
+        <button onClick={generateNextRound} style={{ width: '100%', marginTop: '20px', padding: '15px', background: 'linear-gradient(to right, #ea580c, #dc2626)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.5)' }}>
+          🔥 สร้างแมตช์รอบต่อไป
+        </button>
+      )}
+    </div>
+  )
+
   return (
     <div style={{ padding: '20px', paddingBottom: '90px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -277,66 +321,47 @@ const TournamentDetail = () => {
 
       <h2 style={{ marginTop: 0, color: '#1c1917', textTransform: 'uppercase' }}>{tourney.name}</h2>
 
+      {/* โซนตารางคะแนนปกติ */}
       {tourney.type === 'league' && (
         <div style={{ marginBottom: '25px' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-            <button onClick={() => downloadImage(standingsRef, `ตารางคะแนน-${tourney.name}`)} style={{ background: '#111', color: '#ea580c', border: '1px solid #ea580c', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-              <Download size={14} style={{ marginRight: '5px' }} /> โหลดตารางคะแนน
+            <button onClick={() => setFullscreenView('standings')} style={{ background: '#111', color: '#ea580c', border: '1px solid #ea580c', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+              <Maximize size={14} style={{ marginRight: '5px' }} /> ขยายเพื่อแคปจอ
             </button>
           </div>
-          <div ref={standingsRef} style={{ ...bgStyle, overflowX: 'auto' }}>
-            <h3 style={{ margin: '0 0 15px 0', textAlign: 'center', color: '#fdba74', textShadow: '1px 1px 2px #000' }}>🏆 ตารางคะแนน {tourney.name}</h3>
-            <table style={{ width: '100%', textAlign: 'center', fontSize: '13px', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ color: '#fdba74', borderBottom: '2px solid rgba(234, 88, 12, 0.5)' }}>
-                  <th style={{ paddingBottom:'8px', width: '25px' }}>ลำดับ</th>
-                  <th style={{textAlign:'left', paddingBottom:'8px', paddingLeft: '5px'}}>ทีม</th>
-                  <th>แข่ง</th><th>ชนะ</th><th>เสมอ</th><th>แพ้</th><th>ได้</th><th>เสีย</th><th>GD</th><th>Pts</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standings.map((t, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', height: '45px' }}>
-                    <td style={{ color: '#fdba74', fontWeight: 'bold' }}>{i+1}</td>
-                    <td style={{textAlign:'left', fontWeight: 'bold', color: '#fff', paddingLeft: '5px'}}>{t.name.length > 8 ? t.name.substring(0,8) + '..' : t.name}</td>
-                    <td>{t.played}</td><td>{t.won}</td><td>{t.drawn}</td><td>{t.lost}</td>
-                    <td style={{color:'#4ade80'}}>{t.gf}</td>
-                    <td style={{color:'#f87171'}}>{t.ga}</td>
-                    <td>{t.gd}</td>
-                    <td style={{color:'#facc15', fontWeight:'bold', fontSize:'16px'}}>{t.points}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {renderStandings(false)}
         </div>
       )}
 
+      {/* โซนตารางแข่งปกติ */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-          <button onClick={() => downloadImage(matchesRef, `ตารางแข่ง-${currentRoundName}`)} style={{ background: '#111', color: '#ea580c', border: '1px solid #ea580c', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-            <Download size={14} style={{ marginRight: '5px' }} /> โหลดตารางแข่ง
+          <button onClick={() => setFullscreenView('matches')} style={{ background: '#111', color: '#ea580c', border: '1px solid #ea580c', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+            <Maximize size={14} style={{ marginRight: '5px' }} /> ขยายเพื่อแคปจอ
           </button>
         </div>
-        
-        <div ref={matchesRef} style={bgStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: 'rgba(0,0,0,0.6)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(234, 88, 12, 0.3)' }}>
-            <button data-html2canvas-ignore="true" onClick={() => setRoundIndex(prev => Math.max(0, prev - 1))} disabled={roundIndex === 0} style={{ border: 'none', background: 'none', opacity: roundIndex === 0 ? 0.3 : 1, cursor: 'pointer', color: '#fff' }}><ArrowLeft size={20} /></button>
-            <strong style={{ fontSize: '18px', color: '#fdba74' }}>{currentRoundName || 'ยังไม่มีตารางแข่ง'}</strong>
-            <button data-html2canvas-ignore="true" onClick={() => setRoundIndex(prev => Math.min(allRounds.length - 1, prev + 1))} disabled={roundIndex === allRounds.length - 1} style={{ border: 'none', background: 'none', opacity: roundIndex === allRounds.length - 1 ? 0.3 : 1, cursor: 'pointer', color: '#fff' }}><ArrowRight size={20} /></button>
-          </div>
-
-          {currentMatches.map(m => (
-            <MatchRow key={m.id} match={m} onSave={updateScore} onReset={resetScore} />
-          ))}
-
-          {tourney.type === 'knockout' && roundIndex === allRounds.length - 1 && (
-            <button data-html2canvas-ignore="true" onClick={generateNextRound} style={{ width: '100%', marginTop: '20px', padding: '15px', background: 'linear-gradient(to right, #ea580c, #dc2626)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.5)' }}>
-              🔥 สร้างแมตช์รอบต่อไป
-            </button>
-          )}
-        </div>
+        {renderMatches(false)}
       </div>
+
+      {/* ✅ หน้าต่างโหมดแคปหน้าจอ (Fullscreen) */}
+      {fullscreenView && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: '#000', zIndex: 9999, overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', padding: '15px', boxSizing: 'border-box'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <p style={{ color: '#4ade80', fontSize: '14px', fontWeight: 'bold', margin: 0 }}>
+              📸 คุณสามารถแคปหน้าจอนี้ได้เลย
+            </p>
+            <button onClick={() => setFullscreenView(null)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <X size={16} style={{ marginRight: '5px' }} /> ปิดหน้าต่าง
+            </button>
+          </div>
+          {/* แสดงส่วนที่เลือกแบบเต็มจอ โดยไม่มีปุ่มแก้ไขโผล่มากวนใจ */}
+          {fullscreenView === 'standings' ? renderStandings(true) : renderMatches(true)}
+        </div>
+      )}
     </div>
   )
 }
