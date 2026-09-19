@@ -352,7 +352,6 @@ const TournamentDetail = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <p style={{ color: '#4ade80', fontSize: '14px', fontWeight: 'bold', margin: 0 }}>
-              📸 คุณสามารถแคปหน้าจอนี้ได้เลย
             </p>
             <button onClick={() => setFullscreenView(null)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
               <X size={16} style={{ marginRight: '5px' }} /> ปิดหน้าต่าง
