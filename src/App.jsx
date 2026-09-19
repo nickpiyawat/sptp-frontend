@@ -274,7 +274,7 @@ const TournamentDetail = () => {
           {standings.map((t, i) => (
             <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', height: '45px' }}>
               <td style={{ color: '#fdba74', fontWeight: 'bold' }}>{i+1}</td>
-              <td style={{textAlign:'left', fontWeight: 'bold', color: '#fff', paddingLeft: '5px'}}>{t.name.length > 8 ? t.name.substring(0,8) + '..' : t.name}</td>
+              <td style={{textAlign:'left', fontWeight: 'bold', color: '#fff', paddingLeft: '5px', whiteSpace: 'normal', wordBreak: 'break-word', minWidth: '90px'}}>{t.name}</td>
               <td>{t.played}</td><td>{t.won}</td><td>{t.drawn}</td><td>{t.lost}</td>
               <td style={{color:'#4ade80'}}>{t.gf}</td>
               <td style={{color:'#f87171'}}>{t.ga}</td>
@@ -352,7 +352,7 @@ const TournamentDetail = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <p style={{ color: '#4ade80', fontSize: '14px', fontWeight: 'bold', margin: 0 }}>
-              
+              📸 คุณสามารถแคปหน้าจอนี้ได้เลย
             </p>
             <button onClick={() => setFullscreenView(null)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
               <X size={16} style={{ marginRight: '5px' }} /> ปิดหน้าต่าง
